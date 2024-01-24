@@ -1,4 +1,4 @@
-# MEPS-HC Winter Webinar Series (Jan 2024)
+# MEPS-HC Winter Webinar Series
 
 Welcome to the MEPS-HC Winter Webinar Series repository, brought to you by the Agency for Healthcare Research and Quality (AHRQ). 
 

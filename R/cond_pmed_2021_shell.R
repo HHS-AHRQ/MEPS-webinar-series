@@ -114,10 +114,10 @@
 # Replace "C:/MEPS" below with the directory you saved the files to.
 # For PMED file, rename LINKIDX to EVNTIDX to merge with Conditions
 
-# pmed20 <- read_dta("C:/MEPS/h229a.dta") %>% rename(EVNTIDX=LINKIDX)
-# cond20 <- read_dta("C:/MEPS/h231.dta")
-# clnk20 <- read_dta("C:/MEPS/h229if1.dta")
-# fyc20  <- read_dta("C:/MEPS/h233.dta")
+# pmed21 <- read_dta("C:/MEPS/h229a.dta") %>% rename(EVNTIDX=LINKIDX)
+# cond21 <- read_dta("C:/MEPS/h231.dta")
+# clnk21 <- read_dta("C:/MEPS/h229if1.dta")
+# fyc21  <- read_dta("C:/MEPS/h233.dta")
 
 
 # Select only needed variables ------------------------------------------------

@@ -13,7 +13,7 @@ National totals:
 
 Percent of people with PMED fill
    - Among people ever diagnosed with HL (CHOLDX = 1)
-	- by race/ethnicity
+
 Per-person averages:
    - Avg number of PMED fills for HL
         > Among people ever diagnosed with HL (CHOLDX = 1)

@@ -54,37 +54,40 @@ capture log close
 cd C:\MEPS
 log using Ex1, replace 
 
-/* Get data from web (you can also download manually) */
-/* PMED */
-copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h229a/h229adta.zip" "h229adta.zip", replace
-unzipfile "h229adta.zip", replace
-/* Conditions */ 
-copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h231/h231dta.zip" "h231dta.zip", replace
-unzipfile "h231dta.zip", replace
-/* CLNK */ 
+****************************
+/* condition linkage file */
+****************************
 copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h229i/h229if1dta.zip" "h229if1dta.zip", replace
 unzipfile "h229if1dta.zip", replace 
-/* FY Consolidated */
-copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h233/h233dta.zip" "h233dta.zip", replace
-unzipfile "h233dta.zip", replace 
-
-/* condition linkage file */
 use h229if1, clear
 rename *, lower
 save CLNK_2021, replace
 
+********************************
 /* PMED file, person-Rx-level */
+********************************
+copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h229a/h229adta.zip" "h229adta.zip", replace
+unzipfile "h229adta.zip", replace
 use DUPERSID DRUGIDX RXRECIDX LINKIDX RXDRGNAM RXXP21X using h229a, clear
 rename *, lower
 rename linkidx evntidx
 save PM_2021, replace
 
+****************************************
 /* FY condolidated file, person-level */
+****************************************
+copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h233/h233dta.zip" "h233dta.zip", replace
+unzipfile "h233dta.zip", replace 
 use DUPERSID SEX RACETHX CHOLDX INSURC21 POVCAT21 VARSTR VARPSU PERWT21F using h233, clear
 rename *, lower
 save FY_2021, replace
 
+**********************************************************************
 /* Conditions file, person-condition-level, subset to hyperlipidemia */
+**********************************************************************
+copy "https://meps.ahrq.gov/mepsweb/data_files/pufs/h231/h231dta.zip" "h231dta.zip", replace
+unzipfile "h231dta.zip", replace
+
 use DUPERSID CONDIDX ICD10CDX CCSR1X-CCSR3X using h231, clear
 rename *, lower
 keep if ccsr1x == "END010" | ccsr2x == "END010" | ccsr3x == "END010"
@@ -92,30 +95,35 @@ keep if ccsr1x == "END010" | ccsr2x == "END010" | ccsr3x == "END010"
 sort dupersid condidx
 list dupersid condidx icd10cdx if _n<20
 
+****************************************************************
 /* merge to CLNK file by dupersid and condidx, drop unmatched */
-merge m:m dupersid condidx using CLNK_2021
+****************************************************************
+merge m:m condidx using CLNK_2021
 // inspect file
-sort dupersid condidx
+sort condidx
 list dupersid condidx icd10cdx if _n<20
 // drop observations for that do not match
 drop if _merge~=3
 drop _merge
 
-/* merge to prescribed meds file by dupersid and evntidx, drop unmatched */
-merge m:m dupersid evntidx using PM_2021
+*******************************************************************************************
+/* merge to prescribed meds file by dupersid and evntidx, drop unmatched, drop duplicates */
+*******************************************************************************************
+merge m:m evntidx using PM_2021
 // inspect file
-sort dupersid condidx evntidx
+sort condidx evntidx
 list dupersid condidx icd10cdx evntidx rxrecidx if _n<20
 // drop observations for that do not match
 drop if _merge~=3
 drop _merge
-
-/* drop duplicates */
-duplicates drop dupersid rxrecidx, force
+// drop duplicates 
+duplicates drop rxrecidx, force
 gen one=1
 // inspect file 
 
+*************************************************************************************
 /* collapse to person-level (DUPERSID), sum to get number of fills and expenditures */
+*************************************************************************************
 collapse (sum) num_rx=one (sum) exp_rx=rxxp21x, by(dupersid)
 /* merge to FY file, create flag for any Rx fill for HL */
 merge 1:1 dupersid using FY_2021
@@ -123,6 +131,9 @@ replace exp_rx=0 if _merge==2
 replace num_rx=0 if _merge==2
 gen any_rx=(num_rx>0)
 
+*******************************************
+/* Analysis                         */
+*******************************************
 /* Set survey options */
 svyset varpsu [pw = perwt21f], strata(varstr) vce(linearized) singleunit(centered)
 

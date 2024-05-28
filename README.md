@@ -1,6 +1,6 @@
-# MEPS-HC Winter Webinar Series
+# MEPS-HC Webinar Series
 
-Welcome to the MEPS-HC Winter Webinar Series repository, brought to you by the Agency for Healthcare Research and Quality (AHRQ). 
+Welcome to the MEPS-HC Webinar Series repository, brought to you by the Agency for Healthcare Research and Quality (AHRQ). 
 
 This 3-day webinar series covers an applied example of how to link the MEPS-HC Medical Conditions and Prescribed Medicines public use data files. The example will cover loading and merging MEPS data sets, and using survey procedures for analyzing hyperlipidemia treatment and expenditures in the U.S. civilian noninstitutionalized population for 2021. Basic familiarity with MEPS-HC is beneficial.
 

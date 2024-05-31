@@ -5,7 +5,7 @@ Welcome to the MEPS-HC Webinar Series repository, brought to you by the Agency f
 This 3-day webinar series covers an applied example of how to link the MEPS-HC Medical Conditions and Prescribed Medicines public use data files. The example will cover loading and merging MEPS data sets, and using survey procedures for analyzing hyperlipidemia treatment and expenditures in the U.S. civilian noninstitutionalized population for 2021. Basic familiarity with MEPS-HC is beneficial.
 
 This repository contains the following items:
-* **[cond_pmed_intro.pdf](cond_pmed_intro.pdf)**: Introductory slides
+* **[Summer-Webinar-Slides-2024-508c.pdf](Summer-Webinar-Slides-2024-508c.pdf)**: Introductory slides
 * **[SAS](SAS) (June 4, 2024)**: Agenda and code for SAS session 
 * **[R](R) (June 5, 2024)**: Agenda and code for R session 
 * **[Stata](Stata) (June 6, 2024)**: Agenda and code for Stata session 

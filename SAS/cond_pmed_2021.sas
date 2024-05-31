@@ -232,7 +232,6 @@ proc freq data = hl_merged order = freq;
 run;
 
 
-
 /* 5 - Roll up to person level ------------------------------------------ */
 
 
@@ -367,10 +366,10 @@ proc surveymeans data = fyc_hl sum;
 	var hl_pmed_flag /* Total number of people w/ PMED fills for HL */
 
 		n_hl_fills0  /* Total number of PMED fills for HL           */
-		n_hl_fills   /*  - with missings (BAD!)                     */
+		n_hl_fills   /*  - with missings (BAD SEs!)                 */
 
 		hl_drug_exp0 /* Total PMED expenditures for HL              */
-		hl_drug_exp; /*  - with missings (BAD!)                     */
+		hl_drug_exp; /*  - with missings (BAD SEs!)                 */
 
 run;
 

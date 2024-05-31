@@ -4,15 +4,15 @@
 # of hyperlipidemia
 # 
 # This example code shows how to link the MEPS-HC Medical Conditions file to 
-# the Prescribed Medicines file for data year 2021 in order to estimate the 
-# following:
+# the Prescribed Medicines (PMED) file for data year 2021 in order to estimate 
+# the following:
 #   
 # National totals:
 #   - Total number of people w/ at least one PMED fill for hyperlipidemia (HL)
 #   - Total number of PMED fills for HL
 #   - Total PMED expenditures for HL 
 # 
-# Percent of people with PMED fill
+# Percent of people with a PMED fill
 # - Among people ever diagnosed with HL (CHOLDX = 1)
 #     > By race/ethnicity
 # 
@@ -32,7 +32,7 @@
 #   
 # Input files:
 #   - h229a.sas7bdat        (2021 Prescribed Medicines file)
-#   - h231.sas7bdat         (2021 Conditions file)
+#   - h231.sas7bdat         (2021 Medical Conditions file)
 #   - h229if1.sas7bdat      (2021 CLNK: Condition-Event Link file)
 #   - h233.sas7bdat         (2021 Full-Year Consolidated file)
 # 
@@ -55,7 +55,7 @@
 # For each package that you don't already have installed, un-comment
 # and run.  Skip this step if all packages below are already installed.
 
-# install.packages("survey")     # for survey analysis
+# install.packages("survey")     # for analysis of data from complex surveys
 # install.packages("haven")      # for loading Stata (.dta) files
 # install.packages("tidyverse")  # for data manipulation
 # install.packages("devtools")   # for loading "MEPS" package from GitHub
@@ -63,7 +63,7 @@
 # install.packages("broom")      # for making model output cleaner
 
 # Note: if you previously installed the MEPS package and get an error about 
-# the LONG file, you need to uninstall and reinstall the MEPS package 
+# the LONG file, you will need to uninstall and re-install the MEPS package 
 # due to updates made to the package: 
 
 # remove.packages("MEPS")
@@ -86,7 +86,8 @@
 
 
 
-# Note - there is also an option to adjust lonely PSUs within domains
+# Note - there is also an option to adjust lonely PSUs *within domains*. We are
+# not using it here because Stata and SAS do not have this option.  
 # More info: https://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
 
 # options(survey.adjust.domain.lonely=TRUE)
@@ -104,6 +105,7 @@
 ### Option 1 - load data files using read_MEPS from the MEPS package
 
 # For PMED file, rename LINKIDX to EVNTIDX to merge with Conditions
+
 
 
 
@@ -133,6 +135,7 @@
 
 
 
+
 # Prepare data for estimation -------------------------------------------------
 
 # Subset condition records to hyperlipidemia (any CCSR = "END010") 
@@ -141,29 +144,24 @@
 
 
 
+
 # Example to show someone with 'duplicate' hyperlipidemia conditions with
-# different CONDIDXs.  
-
-
-
-
-
-# Using the first DUPERSID (2320134102) from dup_hl as an example 
+# different CONDIDXs (DUPERSID = "2320134102")
 
 
 
 
 
 # Merge hyperlipidemia conditions with PMED file, using CLNK as crosswalk
-# Note that this is a many-to-many merge due to the 'duplicates'! 
+# Note that this can be a many-to-many merge due to the 'duplicates'! 
 
 
 
 
 
-# Due to the potential for 'duplicate' hyperlipidemia records for the same
-# person, it is necessary to de-duplicate on the unique fill identifier 
-# RXRECIDX within a person.  An example of the issue (DUPERSID=2320134102):
+
+# Revisiting the duplicate issue after merging (DUPERSID = "2320134102")
+
 
 
 
@@ -175,8 +173,8 @@
 
 
 
-# Revisiting the example (DUPERSID = 2320134102)to show effect of 
-# de-duplicating
+# Revisiting the example to show effect of de-duplicating 
+# (DUPERSID = "2320134102")
 
 
 
@@ -196,14 +194,19 @@
 
 
 
-# Revisiting 'duplicate' fill example (DUPERSID = 2320134102) at the person 
-# level to show that we counted their fills and expenses only once 
+
+# Revisiting 'duplicate' fill example at the person level to show
+# that we counted their fills and expenses only once 
 
 
 
 
-# Merge onto FYC file to capture all Strata (VARSTR) and PSUs (VARPSU) for 
-# all MEPS sample persons for correct variance estimation
+
+
+# Merge onto FYC file to capture all strata (VARSTR) and PSUs (VARPSU) for 
+# all MEPS sample persons for correct variance estimation and replace missing
+# values from merge with (true) zeroes.
+
 
 
 
@@ -222,8 +225,12 @@
 
 
 
+
+
 # QC: There should be no records where hl_pmed_flag=0 and 
-# (hl_drug_exp > 0 or number_hl_fills > 0)
+# (hl_drug_exp > 0 or n_hl_fills > 0)
+
+
 
 
 
@@ -242,11 +249,11 @@
 
 
 
-
 # ESTIMATION ------------------------------------------------------------
 
 ### National Totals:
     
+
 
 
 
@@ -256,11 +263,12 @@
 
 
 
+
     
 ### Per-person averages for people with at least one PMED fill for 
 ### hyperlipidemia (hl_pmed_flag = 1)
 
-# Subset survey design object to those with at least one PMED fill
+# Subset survey design object to only those with at least one PMED fill
 # for hyperlipidemia
 
 
@@ -284,7 +292,7 @@
 
 
 # Estimation of means among people who have ever been diagnosed with
-# high cholesterol
+# high cholesterol (includes people with no PMEDs for HL in 2021!)
 
 
 
@@ -292,14 +300,14 @@
 
 # Proportion of people with a PMED fill for HL in 2021 among those with a 
 # lifetime diagnosis of high cholesterol, BY RACE 
-# Using the to_factor option outputs the labels for the variable's values.
-# You can also use just factor() if you don't have labels available 
 
 
 
 
 
 # Logistic regression for (Any PMED for HL) = RACE + SEX + INSURANCE + POVERTY
+# among people with a lifetime diagnosis of high cholesterol
+
 
 
 
@@ -307,6 +315,7 @@
 
 # Optional: Tidy the model output and convert to odds ratios for
 # easier interpretation 
+
 
 
 

@@ -4,15 +4,15 @@
 # of hyperlipidemia
 # 
 # This example code shows how to link the MEPS-HC Medical Conditions file to 
-# the Prescribed Medicines file for data year 2021 in order to estimate the 
-# following:
+# the Prescribed Medicines (PMED) file for data year 2021 in order to estimate 
+# the following:
 #   
 # National totals:
 #   - Total number of people w/ at least one PMED fill for hyperlipidemia (HL)
 #   - Total number of PMED fills for HL
 #   - Total PMED expenditures for HL 
 # 
-# Percent of people with PMED fill
+# Percent of people with a PMED fill
 # - Among people ever diagnosed with HL (CHOLDX = 1)
 #     > By race/ethnicity
 # 
@@ -32,7 +32,7 @@
 #   
 # Input files:
 #   - h229a.sas7bdat        (2021 Prescribed Medicines file)
-#   - h231.sas7bdat         (2021 Conditions file)
+#   - h231.sas7bdat         (2021 Medical Conditions file)
 #   - h229if1.sas7bdat      (2021 CLNK: Condition-Event Link file)
 #   - h233.sas7bdat         (2021 Full-Year Consolidated file)
 # 
@@ -55,7 +55,7 @@
 # For each package that you don't already have installed, un-comment
 # and run.  Skip this step if all packages below are already installed.
 
-# install.packages("survey")     # for survey analysis
+# install.packages("survey")     # for analysis of data from complex surveys
 # install.packages("haven")      # for loading Stata (.dta) files
 # install.packages("tidyverse")  # for data manipulation
 # install.packages("devtools")   # for loading "MEPS" package from GitHub
@@ -63,7 +63,7 @@
 # install.packages("broom")      # for making model output cleaner
 
 # Note: if you previously installed the MEPS package and get an error about 
-# the LONG file, you need to uninstall and reinstall the MEPS package 
+# the LONG file, you will need to uninstall and re-install the MEPS package 
 # due to updates made to the package: 
 
 # remove.packages("MEPS")
@@ -88,7 +88,8 @@ library(broom)
 
 options(survey.lonely.psu="adjust")
 
-# Note - there is also an option to adjust lonely PSUs within domains
+# Note - there is also an option to adjust lonely PSUs *within domains*. We are
+# not using it here because Stata and SAS do not have this option.  
 # More info: https://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
 
 # options(survey.adjust.domain.lonely=TRUE)
@@ -153,7 +154,7 @@ hl <- cond21x %>%
 # different CONDIDXs.  This usually happens when the collapsed 3-digit 
 # ICD10s are the same but the fully-specified ICD10s are different 
 # (e.g., one person has different condition records for both E78.1 and 
-# E78.5, which both map to END010 collapse to E78 on the PUF).
+# E78.5, which both map to END010 and collapse to E78 on the PUF).
 
 dup_hl <- hl[duplicated(hl$DUPERSID), ]
 
@@ -164,7 +165,7 @@ hl %>% filter(DUPERSID == '2320134102')
 
 
 # Merge hyperlipidemia conditions with PMED file, using CLNK as crosswalk
-# Note that this is a many-to-many merge due to the 'duplicates'! 
+# Note that this can be a many-to-many merge due to the 'duplicates'! 
 
 hl_merged <- hl %>%
   inner_join(clnk21, by = c("DUPERSID", "CONDIDX"), 
@@ -213,7 +214,7 @@ hl_merged %>%
 drugs_by_pers <- hl_dedup %>% 
   group_by(DUPERSID) %>% 
   summarize(
-    number_hl_fills = n_distinct(RXRECIDX),
+    n_hl_fills = n_distinct(RXRECIDX),
     hl_drug_exp = sum(RXXP21X)) %>% 
   mutate(hl_pmed_flag = 1)
 
@@ -231,7 +232,7 @@ drugs_by_pers %>%
 fyc_hl <- fyc21x %>% 
   left_join(drugs_by_pers, by="DUPERSID") %>% 
   replace_na(
-    list(number_hl_fills = 0,
+    list(n_hl_fills = 0,
          hl_pmed_flag = 0,
          hl_drug_exp = 0))
 
@@ -250,10 +251,10 @@ table(fyc_hl$hl_pmed_flag, useNA="always")
 
 
 # QC: There should be no records where hl_pmed_flag=0 and 
-# (hl_drug_exp > 0 or number_hl_fills > 0)
+# (hl_drug_exp > 0 or n_hl_fills > 0)
 
 fyc_hl %>% 
-    filter(hl_pmed_flag==0 & (hl_drug_exp > 0 | number_hl_fills > 0))
+    filter(hl_pmed_flag==0 & (hl_drug_exp > 0 | n_hl_fills > 0))
 
 
 # A look at CHOLDX (*ever* diagnosed with hyperlipidemia) vs. hl_pmed_flag
@@ -279,7 +280,7 @@ meps_dsgn <- svydesign(
 ### National Totals:
     
 svytotal(~hl_pmed_flag +    # Total people treated for HL w/ rx drugs
-           number_hl_fills + # Total rx fills for hyperlipidemia
+           n_hl_fills + # Total rx fills for hyperlipidemia
            hl_drug_exp,      # Total rx expenditures for hyperlipidemia
            design=meps_dsgn)
 
@@ -292,7 +293,7 @@ svymean(~hl_pmed_flag, design=meps_dsgn)
 ### Per-person averages for people with at least one PMED fill for 
 ### hyperlipidemia (hl_pmed_flag = 1)
 
-# Subset survey design object to those with at least one PMED fill
+# Subset survey design object to only those with at least one PMED fill
 # for hyperlipidemia
 
 hl_pmed_dsgn <- subset(meps_dsgn, hl_pmed_flag == 1)
@@ -301,7 +302,7 @@ hl_pmed_dsgn <- subset(meps_dsgn, hl_pmed_flag == 1)
 # Estimation of means among people with at least one PMED fill for
 # hyperlipidemia 
 
-svymean(~number_hl_fills +    # Avg # of fills for HL per person w/ HL fills
+svymean(~n_hl_fills +    # Avg # of fills for HL per person w/ HL fills
           hl_drug_exp,        # Avg PMED exp for HL per person w/ HL fills
           design = hl_pmed_dsgn) 
 
@@ -315,11 +316,11 @@ choldx_dsgn <- subset(meps_dsgn, CHOLDX == 1)
 
 
 # Estimation of means among people who have ever been diagnosed with
-# high cholesterol
+# high cholesterol (includes people with no PMEDs for HL in 2021!)
 
-svymean(~hl_pmed_flag +      # Prop. of people with a PMED fill for HL in 2021
-          number_hl_fills +  # Avg # of fills for HL per person w/ HL fills
-          hl_drug_exp,       # Avg PMED exp for HL per person w/ HL fills
+svymean(~hl_pmed_flag + # Prop. of people with a PMED fill for HL in 2021
+          n_hl_fills +  # Avg # of fills for HL per person 
+          hl_drug_exp,  # Avg PMED exp for HL per person 
         design = choldx_dsgn) 
 
 
@@ -332,6 +333,7 @@ svyby(~hl_pmed_flag, ~to_factor(RACETHX), design=choldx_dsgn, svymean)
 
 
 # Logistic regression for (Any PMED for HL) = RACE + SEX + INSURANCE + POVERTY
+# among people with a lifetime diagnosis of high cholesterol
 
 logit <- svyglm(hl_pmed_flag ~ to_factor(RACETHX) + to_factor(SEX) + 
                 to_factor(INSURC21) + to_factor(POVCAT21), 
